@@ -6,7 +6,7 @@ members = [
     "tests/unit/*",
 ]
 default-members = ["ports/servoshell"]
-exclude = [".cargo", "support/crown"]
+exclude = [".cargo", "support/crown", "third_party/stylo"]
 
 [workspace.package]
 version = "0.0.1"
@@ -261,15 +261,15 @@ codegen-units = 1
 #
 # Or for Stylo:
 #
-# [patch."https://github.com/servo/stylo"]
-# selectors = { path = "../stylo/selectors" }
-# servo_arc = { path = "../stylo/servo_arc" }
-# stylo = { path = "../stylo/style" }
-# stylo_atoms = { path = "../stylo/stylo_atoms" }
-# stylo_config = { path = "../stylo/stylo_config" }
-# stylo_dom = { path = "../stylo/stylo_dom" }
-# stylo_malloc_size_of = { path = "../stylo/malloc_size_of" }
-# stylo_traits = { path = "../stylo/style_traits" }
+[patch."https://github.com/servo/stylo"]
+selectors = { path = "third_party/stylo/selectors" }
+servo_arc = { path = "third_party/stylo/servo_arc" }
+stylo = { path = "third_party/stylo/style" }
+stylo_atoms = { path = "third_party/stylo/stylo_atoms" }
+stylo_config = { path = "third_party/stylo/stylo_config" }
+stylo_dom = { path = "third_party/stylo/stylo_dom" }
+stylo_malloc_size_of = { path = "third_party/stylo/malloc_size_of" }
+stylo_traits = { path = "third_party/stylo/style_traits" }
 #
 # Or for WebRender:
 #
