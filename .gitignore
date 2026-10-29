@@ -65,6 +65,7 @@ Sessionx.vim
 
 # Layout debugger trace files
 layout_trace*
+.amp/portals/*
 
 # Package managers
 support/macos/Brewfile.lock.json

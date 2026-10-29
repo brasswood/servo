@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+step() { printf '\n[%s] %s\n' "$(date -Is)" "$*"; }
+step "Install uv 0.8.5"
+if ! command -v uv >/dev/null || [[ "$(uv --version)" != "uv 0.8.5" ]]; then time curl -LsSf https://astral.sh/uv/0.8.5/install.sh | env UV_INSTALL_DIR="$HOME/.local/bin" sh; fi
+step "Install rustup"
+if ! command -v rustup >/dev/null; then time curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none; fi
+grep -Fqx '# Servo toolchain PATH' "$HOME/.bash_profile" || cat >> "$HOME/.bash_profile" <<'EOF'
+# Servo toolchain PATH
+case ":$PATH:" in *":$HOME/.cargo/bin:"*) ;; *) PATH="$HOME/.cargo/bin:$PATH" ;; esac
+case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *) PATH="$HOME/.local/bin:$PATH" ;; esac
+export PATH
+EOF
+
+step "Install Python, initialize submodules, and bootstrap"; time uv python install "$(cat .python-version)"
+time git submodule update --init --recursive
+apt_dependencies_ready() {
+    python3 - <<'PY'
+import ast, pathlib, shutil, subprocess, sys
+tree = ast.parse(pathlib.Path("python/servo/platform/linux.py").read_text())
+packages = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(getattr(x, "id", None) == "APT_PKGS" for x in n.targets))
+available = set(subprocess.check_output(["apt-cache", "pkgnames"], text=True).splitlines())
+packages = [package for package in packages if package in available and (package != "clang" or not shutil.which("clang"))]
+if not packages:
+    sys.exit(1)
+status = subprocess.run(["dpkg-query", "-W", "-f=${db:Status-Status}\\n", *packages], capture_output=True, text=True)
+sys.exit(status.returncode or len(status.stdout.splitlines()) != len(packages) or any(item != "installed" for item in status.stdout.splitlines()))
+PY
+}
+if apt_dependencies_ready; then
+    time ./mach bootstrap --skip-platform --skip-lints
+else
+    time ./mach bootstrap --force --skip-lints
+fi
+step "Fetch locked Rust dependencies"; time cargo fetch --locked
