@@ -27,7 +27,7 @@ def main() -> int:
     if not servo.is_file():
         parser.error(f"Servo executable not found: {servo}")
 
-    command = [str(servo), "--headless", "-Z", "dump-style-stats", "-x", html_files[0].as_uri()]
+    command = [str(servo), "--headless", "--nonincremental-layout", "-Z", "dump-style-stats", "-x", html_files[0].as_uri()]
     return subprocess.run(command, cwd=repo_root, check=False).returncode
 
 
